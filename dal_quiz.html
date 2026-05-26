@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dal — Find Your Path</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
+  :root{--black:#0E0E0E;--white:#F8F5F0;--gold:#C8922A;--gold-dk:#7A5515;--mid:#6B6560;--border:#D8D2C8;--card:#FFFFFF;--radius:14px;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--black);min-height:100vh;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 10% 20%,rgba(200,146,42,0.07) 0%,transparent 70%),radial-gradient(ellipse 50% 60% at 90% 80%,rgba(200,146,42,0.05) 0%,transparent 70%);pointer-events:none;z-index:0;}
+  .wrap{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:2rem 1.25rem 4rem;}
+  .hdr{display:flex;align-items:center;gap:12px;margin-bottom:3rem;}
+  .wordmark{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;letter-spacing:0.04em;color:var(--gold-dk);}
+  .pipe{width:1px;height:20px;background:var(--border);}
+  .hsub{font-size:0.78rem;color:var(--mid);letter-spacing:0.08em;text-transform:uppercase;}
+  .screen{display:none;} .screen.active{display:block;animation:fadeUp 0.4s ease both;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+  /* startup screen */
+  #startup{text-align:center;padding:4rem 0;}
+  .startup-logo{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--gold-dk);margin-bottom:0.5rem;}
+  .startup-sub{font-size:0.85rem;color:var(--mid);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2.5rem;}
+  .spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .startup-msg{font-size:0.9rem;color:var(--mid);}
+  .startup-msg.err{color:#900;background:#FEE;border:1px solid #F88;border-radius:8px;padding:0.75rem 1.25rem;font-size:0.86rem;white-space:pre-wrap;text-align:left;margin-top:1rem;}
+
+  /* fallback upload */
+  .fallback{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);}
+  .fallback p{font-size:0.85rem;color:var(--mid);margin-bottom:0.75rem;}
+  .file-label{display:inline-block;padding:0.6rem 1.4rem;background:var(--gold);color:#fff;border-radius:8px;font-size:0.86rem;font-weight:600;cursor:pointer;transition:background 0.15s;position:relative;}
+  .file-label:hover{background:var(--gold-dk);}
+  .file-label input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;font-size:1px;}
+
+  /* progress */
+  .prog{margin-bottom:2rem;}
+  .prog-meta{display:flex;justify-content:space-between;font-size:0.77rem;color:var(--mid);margin-bottom:0.45rem;letter-spacing:0.04em;text-transform:uppercase;}
+  .prog-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+  .prog-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.4s cubic-bezier(0.4,0,0.2,1);}
+
+  /* question */
+  .q-type{font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:0.55rem;}
+  .q-type.pref{color:var(--mid);}
+  .q-text{font-family:'Playfair Display',serif;font-size:clamp(1.25rem,3vw,1.6rem);font-weight:600;line-height:1.3;margin-bottom:1.75rem;}
+  .opts{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:2rem;}
+  .opt{display:flex;align-items:flex-start;gap:13px;padding:13px 15px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--card);cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s,background 0.15s;user-select:none;}
+  .opt:hover{border-color:var(--gold);box-shadow:0 2px 12px rgba(200,146,42,0.12);}
+  .opt.sel{border-color:var(--gold);background:rgba(200,146,42,0.06);box-shadow:0 2px 16px rgba(200,146,42,0.14);}
+  .opt-l{flex-shrink:0;width:27px;height:27px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;color:var(--mid);transition:all 0.15s;margin-top:2px;}
+  .opt.sel .opt-l{background:var(--gold);border-color:var(--gold);color:#fff;}
+  .opt-t{font-size:0.95rem;line-height:1.45;padding-top:3px;}
+  .nav{display:flex;justify-content:space-between;gap:12px;}
+  .btn{padding:0.65rem 1.4rem;border-radius:9px;font-size:0.88rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--black);transition:all 0.15s;}
+  .btn:hover:not(:disabled){border-color:var(--black);background:var(--black);color:var(--white);}
+  .btn:disabled{opacity:0.3;cursor:not-allowed;} .btn.pri{background:var(--gold);border-color:var(--gold);color:#fff;}
+  .btn.pri:hover:not(:disabled){background:var(--gold-dk);border-color:var(--gold-dk);}
+
+  /* result */
+  .res-eye{font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:0.5rem;}
+  .res-name{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,2.8rem);font-weight:700;line-height:1.1;margin-bottom:0.7rem;}
+  .res-tag{font-size:1rem;color:var(--mid);line-height:1.6;max-width:500px;margin-bottom:1.5rem;}
+  .conf{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:0.79rem;font-weight:600;margin-bottom:1.75rem;}
+  .conf.strong{background:#EDFAED;color:#1A6B1A;border:1px solid #A8DBA8;}
+  .conf.moderate{background:#FFF8E6;color:#7A5515;border:1px solid #F0D89A;}
+  .conf.narrow{background:#F0F0F0;color:#555;border:1px solid #CCC;}
+  .divider{height:1px;background:var(--border);margin:1.5rem 0;}
+  .sec-lbl{font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);font-weight:600;margin-bottom:0.85rem;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:1.75rem;}
+  .chip{padding:4px 11px;border-radius:20px;border:1px solid var(--border);font-size:0.8rem;background:var(--card);}
+  .bars{display:flex;flex-direction:column;gap:7px;margin-bottom:2rem;}
+  .brow{display:grid;grid-template-columns:152px 1fr 42px;align-items:center;gap:10px;}
+  .bname{font-size:0.8rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bname.w{color:var(--gold-dk);font-weight:700;}
+  .btrack{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+  .bfill{height:100%;background:var(--border);border-radius:3px;transition:width 0.7s cubic-bezier(0.4,0,0.2,1);}
+  .bfill.w{background:var(--gold);}
+  .bval{font-size:0.76rem;color:var(--mid);text-align:right;font-variant-numeric:tabular-nums;}
+  .bval.w{color:var(--gold-dk);font-weight:700;}
+  .rrow{display:flex;gap:10px;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hdr">
+    <span class="wordmark">Dalhousie</span>
+    <span class="pipe"></span>
+    <span class="hsub">Find Your Path</span>
+  </header>
+
+  <!-- STARTUP: auto-loads everything, shows fallback only if fetch fails -->
+  <div id="startup" class="screen active">
+    <div class="startup-logo">Find Your Path</div>
+    <div style="font-size:0.7rem;color:var(--mid);letter-spacing:0.08em;margin-bottom:0.25rem;">v1.2 &nbsp;&middot;&nbsp; Dalhousie University</div>
+    <div class="startup-sub">Dalhousie University</div>
+    <div class="spin" id="spin"></div>
+    <div class="startup-msg" id="startup-msg">Loading&#8230;</div>
+    <div class="fallback" id="fallback" style="display:none">
+      <p>Could not load automatically. Upload <code>dal_quiz_logic.xlsx</code> to continue:</p>
+      <label class="file-label">Choose file<input type="file" id="fi" accept=".xlsx,.xls,.xlsm"></label>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="qs" class="screen">
+    <div class="prog">
+      <div class="prog-meta"><span id="qc">Question 1 of 12</span><span id="qp">8%</span></div>
+      <div class="prog-track"><div class="prog-fill" id="pf" style="width:8%"></div></div>
+    </div>
+    <p class="q-type" id="ql">About you</p>
+    <h2 class="q-text" id="qt"></h2>
+    <ul class="opts" id="ol"></ul>
+    <div class="nav">
+      <button class="btn" id="bb" onclick="nav(-1)">&#8592; Back</button>
+      <button class="btn pri" id="bn" onclick="nav(1)" disabled>Next &#8594;</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="rs" class="screen">
+    <p class="res-eye">Your archetype</p>
+    <h2 class="res-name" id="rn"></h2>
+    <p class="res-tag" id="rt"></p>
+    <div id="rc"></div>
+    <div class="divider"></div>
+    <p class="sec-lbl">Dal programs that fit your profile</p>
+    <div class="chips" id="rp"></div>
+    <div class="divider"></div>
+    <p class="sec-lbl">Your full archetype profile</p>
+    <div class="bars" id="rb"></div>
+    <div class="rrow">
+      <button class="btn pri" onclick="startQuiz()">Take it again</button>
+    </div>
+  </div>
+</div>
+
+<!-- XLSX library -->
+<script>
+var XLSX_LOADED = false;
+var XLSX_CACHE_KEY = 'dal_quiz_xlsx_0185';
+
+function onXlsxReady() {
+  XLSX_LOADED = true;
+  // Now fetch the parameter file
+  fetchParams();
+  // Cache library for offline use
+  try {
+    if (!localStorage.getItem(XLSX_CACHE_KEY)) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',true);
+      xhr.onload=function(){if(xhr.status===200){try{localStorage.setItem(XLSX_CACHE_KEY,xhr.responseText);}catch(e){}}};
+      xhr.send();
+    }
+  } catch(e){}
+}
+
+function onXlsxError() {
+  // Try loading from localStorage cache
+  try {
+    var cached = localStorage.getItem(XLSX_CACHE_KEY);
+    if (cached && cached.length > 10000) {
+      var fn = new Function(cached);
+      fn();
+      if (typeof XLSX !== 'undefined') { XLSX_LOADED = true; fetchParams(); return; }
+    }
+  } catch(e){}
+  // Both CDN and cache failed
+  setMsg('Could not load the Excel library. Check your internet connection and reload.');
+  showFallback();
+}
+
+setTimeout(function(){
+  if (typeof XLSX !== 'undefined' && !XLSX_LOADED) { XLSX_LOADED = true; fetchParams(); }
+}, 800);
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+  onload="onXlsxReady()" onerror="onXlsxError()"
+  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+var P = null, answers = [], cur = 0;
+var DIMS = ['ANL','CON','CRE','SOC','EXP','LED','INV'];
+
+// ── Startup helpers ───────────────────────────────────────
+function setMsg(txt, isErr) {
+  var el = document.getElementById('startup-msg');
+  el.textContent = txt;
+  el.className = 'startup-msg' + (isErr ? ' err' : '');
+  document.getElementById('spin').style.display = isErr ? 'none' : 'block';
+}
+
+function showFallback() {
+  document.getElementById('fallback').style.display = 'block';
+  var fi = document.getElementById('fi');
+  if (fi) fi.addEventListener('change', function() {
+    var f = this.files && this.files[0];
+    if (f) loadFromBinary(f);
+    this.value = '';
+  });
+}
+
+function show(id) {
+  var ss = document.querySelectorAll('.screen');
+  for (var i=0;i<ss.length;i++) ss[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+}
+
+// ── Auto-fetch the Excel file from same directory ─────────
+function fetchParams() {
+  setMsg('Loading quiz parameters\u2026');
+
+  // Derive the Excel URL from the current page URL
+  // Works for GitHub Pages, Netlify, any static host
+  var base = window.location.href.replace(/\/[^\/]*$/, '/');
+  var xlsxUrl = base + 'dal_quiz_logic.xlsx';
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', xlsxUrl, true);
+  xhr.responseType = 'arraybuffer';
+
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      try {
+        var data = new Uint8Array(xhr.response);
+        var wb = XLSX.read(data, { type: 'array', cellFormula: false });
+        P = parse(wb);
+        startQuiz();
+      } catch(ex) {
+        setMsg('Could not read the parameter file.\n\nError: ' + ex.message, true);
+        showFallback();
+        console.error(ex);
+      }
+    } else {
+      setMsg('Parameter file not found at: ' + xlsxUrl + '\n\nMake sure dal_quiz_logic.xlsx is in the same folder as this page.', true);
+      showFallback();
+    }
+  };
+
+  xhr.onerror = function() {
+    // CORS or network error — show fallback upload
+    setMsg('Could not auto-load the parameter file (network error).\nUpload it manually below to continue.', true);
+    showFallback();
+  };
+
+  xhr.send();
+}
+
+function loadFromBinary(file) {
+  setMsg('Reading file\u2026');
+  document.getElementById('fallback').style.display = 'none';
+  document.getElementById('spin').style.display = 'block';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, { type: 'binary', cellFormula: false });
+      P = parse(wb);
+      startQuiz();
+    } catch(ex) {
+      setMsg('Could not read the file.\n\nError: ' + ex.message, true);
+      showFallback();
+    }
+  };
+  reader.onerror = function() { setMsg('Could not read the file. Please try again.', true); showFallback(); };
+  reader.readAsBinaryString(file);
+}
+
+// ── Cell helper ───────────────────────────────────────────
+function cv(ws, r, c) {
+  var cell = ws[XLSX.utils.encode_cell({r:r-1,c:c-1})];
+  return cell && cell.v !== undefined ? cell.v : null;
+}
+
+// ── Parser ────────────────────────────────────────────────
+function parse(wb) {
+  var out = {archetypes:[],profiles:{},questions:[],programs:{}};
+
+  var wsP = wb.Sheets['Archetype Profiles'];
+  if (!wsP) throw new Error('"Archetype Profiles" sheet not found.');
+  for (var c=5;c<=14;c++) {
+    var name=cv(wsP,14,c); if(!name||String(name).trim()==='') continue;
+    var id=slug(String(name)), tag=String(cv(wsP,15,c)||'');
+    out.archetypes.push({id:id,name:String(name),tagline:tag});
+    out.profiles[id]={};
+    for (var di=0;di<DIMS.length;di++) out.profiles[id][DIMS[di]]=Number(cv(wsP,16+di,c))||0;
+  }
+  if (!out.archetypes.length) throw new Error('No archetypes found in row 14 cols 5-14.');
+
+  var wsS = wb.Sheets['Score Simulator'];
+  if (!wsS) throw new Error('"Score Simulator" sheet not found.');
+  var simRows=[];
+  for (var r=4;r<=15;r++) {
+    var qNum=cv(wsS,r,1),qTxt=String(cv(wsS,r,2)||'').trim(),qTyp=String(cv(wsS,r,9)||'').trim(),opts=[];
+    for (var oc=3;oc<=6;oc++){var raw=String(cv(wsS,r,oc)||'').trim();if(raw){var m=raw.match(/^([A-F])\.\s*(.+)$/);if(m)opts.push({letter:m[1],text:m[2].trim()});}}
+    var ef=String(cv(wsS,r,7)||'').trim();
+    if(ef){var lines=ef.split('\n');for(var li=0;li<lines.length;li++){var lm=lines[li].trim().match(/^([A-F])\.\s*(.+)$/);if(lm)opts.push({letter:lm[1],text:lm[2].trim()});}}
+    simRows.push({qNum:Number(qNum),qTxt:qTxt,qTyp:qTyp,opts:opts});
+  }
+
+  var wsT=wb.Sheets['Trait Dimension Theory'];
+  if (!wsT) throw new Error('"Trait Dimension Theory" sheet not found.');
+  var tRange=XLSX.utils.decode_range(wsT['!ref']),scoreMap={},lastQN=null;
+  for (var tr=4;tr<=tRange.e.r+1;tr++) {
+    var qn=cv(wsT,tr,1);
+    if(qn!==null&&qn!==undefined&&String(qn).trim()!==''){lastQN=Number(qn);if(!scoreMap[lastQN])scoreMap[lastQN]={};}
+    var rawCell=String(cv(wsT,tr,2)||'').trim(),cellLines=rawCell.split('\n');
+    for(var cl=0;cl<cellLines.length;cl++){
+      var cm=cellLines[cl].trim().match(/^([A-F])\.\s*.+$/);
+      if(cm&&lastQN!==null){
+        var letter=cm[1],scores={};
+        for(var dj=0;dj<DIMS.length;dj++){var sv=cv(wsT,tr,3+dj);scores[DIMS[dj]]=(sv===null||sv==='\xB7'||sv===''||sv===undefined)?0:(Number(sv)||0);}
+        scoreMap[lastQN][letter]=scores;
+      }
+    }
+  }
+
+  var wsW=wb.Sheets['Q7-Q12 Direct Weights'];
+  if (!wsW) throw new Error('"Q7-Q12 Direct Weights" sheet not found.');
+  var wArchIds=[];
+  for(var wc=2;wc<=15;wc++){var wn=cv(wsW,5,wc);if(wn&&String(wn).trim())wArchIds.push(slug(String(wn)));}
+  function readWeights(rs,re){var res={};for(var wr=rs;wr<=re;wr++){var wraw=String(cv(wsW,wr,1)||'').trim(),wm=wraw.match(/^([A-F])\.\s*/);if(!wm)continue;var weights={};for(var wi=0;wi<wArchIds.length;wi++){var wv=cv(wsW,wr,2+wi);if(wv!==null&&wv!==undefined&&wv!=='')weights[wArchIds[wi]]=Number(wv)||0;}res[wm[1]]=weights;}return res;}
+  var q7map=readWeights(6,11),q12map=readWeights(13,18);
+
+  for(var si=0;si<simRows.length;si++){
+    var sr=simRows[si],isDirect=sr.qTyp.toLowerCase().indexOf('direct')>=0,finalOpts=[];
+    for(var oi=0;oi<sr.opts.length;oi++){
+      var opt=sr.opts[oi];
+      if(isDirect){var wmap=sr.qNum===7?q7map:q12map;finalOpts.push({letter:opt.letter,text:opt.text,weights:wmap[opt.letter]||{},isDirect:true});}
+      else{var sm=scoreMap[sr.qNum]||{};finalOpts.push({letter:opt.letter,text:opt.text,scores:sm[opt.letter]||{},isDirect:false});}
+    }
+    out.questions.push({qNum:sr.qNum,text:sr.qTxt,type:isDirect?'direct':'trait',options:finalOpts});
+  }
+  out.questions.sort(function(a,b){return a.qNum-b.qNum;});
+
+  var wsG=wb.Sheets['Dal Programs by Archetype'];
+  if(wsG){var gRange=XLSX.utils.decode_range(wsG['!ref']),lastId=null;
+    for(var gr=4;gr<=gRange.e.r+1;gr++){var an=cv(wsG,gr,2),pn=cv(wsG,gr,4);if(an)lastId=slug(String(an));if(pn&&lastId){if(!out.programs[lastId])out.programs[lastId]=[];out.programs[lastId].push(String(pn).trim());}}}
+  return out;
+}
+
+// ── Quiz ──────────────────────────────────────────────────
+function startQuiz(){
+  answers=[];for(var i=0;i<P.questions.length;i++)answers.push(null);
+  cur=0;show('qs');render();
+}
+
+function render(){
+  var q=P.questions[cur],tot=P.questions.length,pct=Math.round(((cur+1)/tot)*100);
+  document.getElementById('qc').textContent='Question '+(cur+1)+' of '+tot;
+  document.getElementById('qp').textContent=pct+'%';
+  document.getElementById('pf').style.width=pct+'%';
+  document.getElementById('qt').textContent=q.text;
+  var lbl=document.getElementById('ql');
+  if(q.type==='direct'){lbl.textContent='Your preference';lbl.className='q-type pref';}
+  else{lbl.textContent='About you';lbl.className='q-type';}
+  var list=document.getElementById('ol');list.innerHTML='';
+  for(var i=0;i<q.options.length;i++){(function(idx){var opt=q.options[idx],li=document.createElement('li');li.className='opt'+(answers[cur]===idx?' sel':'');li.innerHTML='<span class="opt-l">'+esc(opt.letter)+'</span><span class="opt-t">'+esc(opt.text)+'</span>';li.addEventListener('click',function(){pick(idx);});list.appendChild(li);})(i);}
+  document.getElementById('bb').disabled=(cur===0);
+  var nb=document.getElementById('bn');nb.disabled=(answers[cur]===null);nb.textContent=(cur===tot-1)?'See my results \u2192':'Next \u2192';
+}
+
+function pick(idx){
+  answers[cur]=idx;
+  var items=document.querySelectorAll('.opt');
+  for(var i=0;i<items.length;i++){if(i===idx)items[i].classList.add('sel');else items[i].classList.remove('sel');}
+  document.getElementById('bn').disabled=false;
+}
+
+function nav(dir){
+  if(dir===1&&cur===P.questions.length-1){showResult();return;}
+  cur=Math.max(0,Math.min(P.questions.length-1,cur+dir));render();
+}
+
+// ── Scoring ───────────────────────────────────────────────
+function calcScore(){
+  var dimT={},dirT={};
+  for(var i=0;i<DIMS.length;i++)dimT[DIMS[i]]=0;
+  for(var j=0;j<P.archetypes.length;j++)dirT[P.archetypes[j].id]=0;
+  for(var qi=0;qi<P.questions.length;qi++){
+    var ai=answers[qi];if(ai===null||ai===undefined)continue;
+    var opt=P.questions[qi].options[ai];if(!opt)continue;
+    if(opt.isDirect){var wts=opt.weights||{};for(var k in wts)if(Object.prototype.hasOwnProperty.call(wts,k)&&Object.prototype.hasOwnProperty.call(dirT,k))dirT[k]+=wts[k];}
+    else{var sc=opt.scores||{};for(var di=0;di<DIMS.length;di++)dimT[DIMS[di]]+=sc[DIMS[di]]||0;}
+  }
+  var results=[];
+  for(var ai2=0;ai2<P.archetypes.length;ai2++){
+    var arch=P.archetypes[ai2],prof=P.profiles[arch.id]||{},sq=0;
+    for(var dj=0;dj<DIMS.length;dj++){var diff=(dimT[DIMS[dj]]||0)-(prof[DIMS[dj]]||0);sq+=diff*diff;}
+    var dist=Math.sqrt(sq),dir2=dirT[arch.id]||0;
+    results.push({id:arch.id,name:arch.name,tagline:arch.tagline,dist:dist,dir:dir2,adj:dist-(dir2*0.3)});
+  }
+  results.sort(function(a,b){return a.adj-b.adj;});
+  var gap=results.length>1?results[1].adj-results[0].adj:99;
+  return{results:results,conf:gap>=3?'Strong':(gap>=1.5?'Moderate':'Narrow'),gap:gap};
+}
+
+// ── Result ────────────────────────────────────────────────
+function showResult(){
+  var s=calcScore(),win=s.results[0];
+  document.getElementById('rn').textContent=win.name;
+  document.getElementById('rt').textContent=win.tagline||'';
+  var cls=s.conf.toLowerCase();
+  document.getElementById('rc').innerHTML='<div class="conf '+cls+'">'+(cls==='strong'?'\u2726':(cls==='moderate'?'\u25C8':'\u25C7'))+' '+s.conf+' match &nbsp;&middot;&nbsp; gap to 2nd: '+s.gap.toFixed(1)+'</div>';
+  var progs=P.programs[win.id]||[],ph='';
+  if(progs.length){for(var pi=0;pi<progs.length;pi++)ph+='<span class="chip">'+esc(progs[pi])+'</span>';}
+  else ph='<span style="color:var(--mid);font-size:0.85rem">No programs listed.</span>';
+  document.getElementById('rp').innerHTML=ph;
+  var maxA=s.results[0].adj,minA=s.results[0].adj;
+  for(var i=0;i<s.results.length;i++){if(s.results[i].adj>maxA)maxA=s.results[i].adj;if(s.results[i].adj<minA)minA=s.results[i].adj;}
+  var rng=maxA-minA||1,bh='';
+  for(var j=0;j<s.results.length;j++){var r2=s.results[j],pct=Math.round(((maxA-r2.adj)/rng)*100),w=(j===0);bh+='<div class="brow"><span class="bname '+(w?'w':'')+'">' +esc(r2.name)+'</span><div class="btrack"><div class="bfill '+(w?'w':'')+'" style="width:'+pct+'%"></div></div><span class="bval '+(w?'w':'')+'">'+r2.adj.toFixed(1)+'</span></div>';}
+  document.getElementById('rb').innerHTML=bh;
+  show('rs');
+}
+
+function slug(s){return String(s).toLowerCase().replace(/[^a-z0-9\s]/g,'').trim().replace(/\s+/g,'_');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+</script>
+</body>
+</html>
