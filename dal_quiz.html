@@ -92,7 +92,7 @@
   <!-- STARTUP: auto-loads everything, shows fallback only if fetch fails -->
   <div id="startup" class="screen active">
     <div class="startup-logo">Find Your Path</div>
-    <div style="font-size:0.7rem;color:var(--mid);letter-spacing:0.08em;margin-bottom:0.25rem;">v1.2 &nbsp;&middot;&nbsp; Dalhousie University</div>
+    <div style="font-size:0.7rem;color:var(--mid);letter-spacing:0.08em;margin-bottom:0.25rem;">v1.3 &nbsp;&middot;&nbsp; Dalhousie University</div>
     <div class="startup-sub">Dalhousie University</div>
     <div class="spin" id="spin"></div>
     <div class="startup-msg" id="startup-msg">Loading&#8230;</div>
@@ -135,52 +135,33 @@
   </div>
 </div>
 
-<!-- XLSX library -->
+<!-- XLSX library — loaded locally from repo, no CDN dependency -->
+<script src="xlsx.full.min.js"></script>
 <script>
 var XLSX_LOADED = false;
-var XLSX_CACHE_KEY = 'dal_quiz_xlsx_0185';
-
-function onXlsxReady() {
-  XLSX_LOADED = true;
-  // Now fetch the parameter file
-  fetchParams();
-  // Cache library for offline use
-  try {
-    if (!localStorage.getItem(XLSX_CACHE_KEY)) {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',true);
-      xhr.onload=function(){if(xhr.status===200){try{localStorage.setItem(XLSX_CACHE_KEY,xhr.responseText);}catch(e){}}};
-      xhr.send();
-    }
-  } catch(e){}
-}
-
-function onXlsxError() {
-  // Try loading from localStorage cache
-  try {
-    var cached = localStorage.getItem(XLSX_CACHE_KEY);
-    if (cached && cached.length > 10000) {
-      var fn = new Function(cached);
-      fn();
-      if (typeof XLSX !== 'undefined') { XLSX_LOADED = true; fetchParams(); return; }
-    }
-  } catch(e){}
-  // Both CDN and cache failed
-  setMsg('Could not load the Excel library. Check your internet connection and reload.');
-  showFallback();
-}
-
-setTimeout(function(){
-  if (typeof XLSX !== 'undefined' && !XLSX_LOADED) { XLSX_LOADED = true; fetchParams(); }
-}, 800);
+// Local script loads synchronously — check immediately and after a tick
+(function() {
+  if (typeof XLSX !== 'undefined') {
+    XLSX_LOADED = true;
+    // fetchParams called after DOM ready
+  }
+})();
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
-  onload="onXlsxReady()" onerror="onXlsxError()"
-  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
 var P = null, answers = [], cur = 0;
 var DIMS = ['ANL','CON','CRE','SOC','EXP','LED','INV'];
+
+// Trigger auto-fetch once DOM is ready (library loaded synchronously above)
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof XLSX !== 'undefined') {
+    XLSX_LOADED = true;
+    fetchParams();
+  } else {
+    setMsg('Excel library failed to load. Make sure xlsx.full.min.js is in the same folder as this page.', true);
+    showFallback();
+  }
+});
 
 // ── Startup helpers ───────────────────────────────────────
 function setMsg(txt, isErr) {
