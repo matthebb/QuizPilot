@@ -92,8 +92,8 @@
 
   <div id="qs" class="screen">
     <div class="prog">
-      <div class="prog-meta"><span id="qc">Question 1 of 12</span><span id="qp">8%</span></div>
-      <div class="prog-track"><div class="prog-fill" id="pf" style="width:8%"></div></div>
+      <div class="prog-meta"><span id="qc">Question 1 of 11</span><span id="qp">8%</span></div>
+      <div class="prog-track"><div class="prog-fill" id="pf" style="width:9%"></div></div>
     </div>
     <p class="q-type" id="ql">About you</p>
     <h2 class="q-text" id="qt"></h2>
@@ -126,8 +126,8 @@
 
 <script>
 // ── Cache keys ────────────────────────────────────────────
-var CACHE_PARAMS  = 'dal_params_data';    // stores serialised P object
-var CACHE_VERSION = 'dal_params_version'; // stores version string e.g. "1.4"
+var CACHE_PARAMS  = 'dal_params_data_v16';    // stores serialised P object
+var CACHE_VERSION = 'dal_params_version_v16'; // stores version string e.g. "1.4"
 
 // ── State ─────────────────────────────────────────────────
 var P = null, answers = [], cur = 0;
@@ -175,6 +175,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function fetchAndCheck() {
+  // Clear any legacy cache keys from older versions
+  try {
+    var legacyKeys = ['dal_params_data','dal_params_version',
+                      'dal_params_data_v15','dal_params_version_v15'];
+    for (var li=0; li<legacyKeys.length; li++) {
+      localStorage.removeItem(legacyKeys[li]);
+    }
+  } catch(e){}
+
   setMsg('Checking for updates\u2026');
 
   // Derive Excel URL from current page URL
