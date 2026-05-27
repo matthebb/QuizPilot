@@ -85,7 +85,10 @@
   .ai-insight.error{font-style:normal;font-size:0.85rem;color:var(--mid);}
 
   .ai-insight{font-size:1.05rem;font-style:italic;color:var(--black);line-height:1.65;max-width:520px;margin-bottom:1.5rem;min-height:1.5rem;}
+  .ai-insight.streaming{color:var(--mid);font-style:italic;}
   .ai-insight.streaming::after{content:'';display:inline-block;width:2px;height:1.1em;background:var(--gold);margin-left:2px;vertical-align:text-bottom;animation:blink 0.7s step-end infinite;}
+  .ai-insight.done{color:var(--black);font-style:italic;border-left:3px solid var(--gold);padding-left:0.75rem;}
+  .ai-insight.error{font-style:normal;font-size:0.82rem;color:#900;background:#FEE;border:1px solid #F88;border-radius:6px;padding:0.5rem 0.75rem;}
   @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
 </style>
 </head>
@@ -449,6 +452,13 @@ function render() {
   document.getElementById('qt').textContent=q.text;
   var lbl=document.getElementById('ql');
   if(q.type==='direct'){lbl.textContent='Your preference';lbl.className='q-type pref';}
+  else if(cur===0){
+    // Show parameter version on Q1 so we can confirm live vs cached
+    var verStr='';
+    try{verStr=localStorage.getItem('dal_params_version_v16')||'';}catch(e){}
+    lbl.textContent='About you' + (verStr ? '  ·  Parameters v'+verStr : '');
+    lbl.className='q-type';
+  }
   else{lbl.textContent='About you';lbl.className='q-type';}
   var list=document.getElementById('ol'); list.innerHTML='';
   for(var i=0;i<q.options.length;i++){
@@ -536,7 +546,7 @@ function showResult() {
 // ── Utils ─────────────────────────────────────────────────
 
 // ── AI personalised insight ───────────────────────────────────────────────────
-var ANTHROPIC_API_KEY = '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';
+// API key handled server-side by Netlify function — no key in client code
 
 var Q_LABELS = {
   1:'school subjects',2:'group behaviour',3:'proudest project',
@@ -574,49 +584,51 @@ function collectAnswerTexts() {
 }
 
 function generateInsight(archName) {
-  var el=document.getElementById('ai-insight');
+  var el = document.getElementById('ai-insight');
   if (!el) return;
-  if (!ANTHROPIC_API_KEY||ANTHROPIC_API_KEY==='YOUR_API_KEY_HERE') { el.style.display='none'; return; }
-  var prompt=buildPrompt(archName, collectAnswerTexts());
-  el.textContent=''; el.className='ai-insight streaming';
-  fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key':ANTHROPIC_API_KEY,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
-    body:JSON.stringify({
-      model:'claude-opus-4-5',max_tokens:80,stream:true,
-      messages:[{role:'user',content:prompt}]
+
+  // Show immediate waiting state
+  el.textContent = 'Generating your insight…';
+  el.className = 'ai-insight streaming';
+
+  var prompt = buildPrompt(archName, collectAnswerTexts());
+
+  // Call our Netlify proxy — no API key in client code
+  fetch('/.netlify/functions/anthropic-proxy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-opus-4-5',
+      max_tokens: 80,
+      messages: [{ role: 'user', content: prompt }]
     })
-  }).then(function(r){
-    if(!r.ok) throw new Error('API '+r.status);
-    var reader=r.body.getReader(),decoder=new TextDecoder(),buffer='';
-    function read(){
-      return reader.read().then(function(res){
-        if(res.done){el.className='ai-insight';return;}
-        buffer+=decoder.decode(res.value,{stream:true});
-        var lines=buffer.split('\n'); buffer=lines.pop();
-        for(var i=0;i<lines.length;i++){
-          var line=lines[i].trim();
-          if(!line.startsWith('data: ')) continue;
-          var data=line.slice(6);
-          if(data==='[DONE]'){el.className='ai-insight';return;}
-          try{
-            var p=JSON.parse(data);
-            if(p.type==='content_block_delta'&&p.delta&&p.delta.type==='text_delta')
-              el.textContent+=p.delta.text;
-          }catch(e){}
-        }
-        return read();
+  })
+  .then(function(r) {
+    if (!r.ok) {
+      return r.json().then(function(errData) {
+        throw new Error('API error ' + r.status + ': ' + (errData.error || JSON.stringify(errData)));
       });
     }
-    return read();
-  }).catch(function(err){
-    console.warn('AI insight failed:',err);
-    el.className='ai-insight'; el.textContent='';
+    return r.json();
+  })
+  .then(function(data) {
+    // Non-streaming response from proxy
+    var text = '';
+    if (data.content && data.content[0] && data.content[0].text) {
+      text = data.content[0].text.trim();
+    }
+    if (text) {
+      el.textContent = text;
+      el.className = 'ai-insight done';
+    } else {
+      el.textContent = '';
+      el.className = 'ai-insight';
+    }
+  })
+  .catch(function(err) {
+    console.error('AI insight error:', err);
+    el.textContent = 'Could not generate insight: ' + err.message;
+    el.className = 'ai-insight error';
   });
 }
 
