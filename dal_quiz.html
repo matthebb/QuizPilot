@@ -152,6 +152,8 @@ var CACHE_PARAMS  = 'dal_params_data_v16';    // stores serialised P object
 var CACHE_VERSION = 'dal_params_version_v16'; // stores version string e.g. "1.4"
 
 // ── State ─────────────────────────────────────────────────
+var HTML_VERSION  = '1.8';   // bump this whenever dal_quiz.html is updated
+var HTML_VERSION = '1.8'; // bump when dal_quiz.html is updated
 var P = null, answers = [], cur = 0;
 var DIMS = ['ANL','CON','CRE','SOC','EXP','LED','INV'];
 
@@ -197,10 +199,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function fetchAndCheck() {
-  // Clear any legacy cache keys from older versions
+  // Clear old cache keys from previous versions only
   try {
-    var legacyKeys = ['dal_params_data','dal_params_version',
-                      'dal_params_data_v15','dal_params_version_v15'];
+    var legacyKeys = [
+      'dal_params_data','dal_params_version',
+      'dal_params_data_v15','dal_params_version_v15'
+    ];
     for (var li=0; li<legacyKeys.length; li++) {
       localStorage.removeItem(legacyKeys[li]);
     }
@@ -453,10 +457,12 @@ function render() {
   var lbl=document.getElementById('ql');
   if(q.type==='direct'){lbl.textContent='Your preference';lbl.className='q-type pref';}
   else if(cur===0){
-    // Show parameter version on Q1 so we can confirm live vs cached
-    var verStr='';
-    try{verStr=localStorage.getItem('dal_params_version_v16')||'';}catch(e){}
-    lbl.textContent='About you' + (verStr ? '  ·  Parameters v'+verStr : '');
+    // Show both HTML version and parameters version on Q1
+    var paramsVer='';
+    try{paramsVer=localStorage.getItem(CACHE_VERSION)||'';}catch(e){}
+    var verParts = ['HTML v'+HTML_VERSION];
+    if(paramsVer) verParts.push('Params v'+paramsVer);
+    lbl.textContent = 'About you  ·  ' + verParts.join('  ·  ');
     lbl.className='q-type';
   }
   else{lbl.textContent='About you';lbl.className='q-type';}
