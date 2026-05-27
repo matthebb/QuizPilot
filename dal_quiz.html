@@ -338,11 +338,11 @@ function parse(wb) {
   var wsS = wb.Sheets['Score Simulator'];
   if (!wsS) throw new Error('"Score Simulator" sheet not found.');
   var simRows=[];
-  for (var r=4;r<=15;r++) {
+  for (var r=4;r<=14;r++) {
     var qNum=cv(wsS,r,1),qTxt=String(cv(wsS,r,2)||'').trim(),qTyp=String(cv(wsS,r,9)||'').trim(),opts=[];
-    for (var oc=3;oc<=6;oc++){var raw=String(cv(wsS,r,oc)||'').trim();if(raw){var m=raw.match(/^([A-F])\.\s*(.+)$/);if(m)opts.push({letter:m[1],text:m[2].trim()});}}
+    for (var oc=3;oc<=6;oc++){var raw=String(cv(wsS,r,oc)||'').trim();if(raw){var m=raw.match(/^([A-H])\.\s*(.+)$/);if(m)opts.push({letter:m[1],text:m[2].trim()});}}
     var ef=String(cv(wsS,r,7)||'').trim();
-    if(ef){var lines=ef.split('\n');for(var li=0;li<lines.length;li++){var lm=lines[li].trim().match(/^([A-F])\.\s*(.+)$/);if(lm)opts.push({letter:lm[1],text:lm[2].trim()});}}
+    if(ef){var lines=ef.split('\n');for(var li=0;li<lines.length;li++){var lm=lines[li].trim().match(/^([A-H])\.\s*(.+)$/);if(lm)opts.push({letter:lm[1],text:lm[2].trim()});}}
     simRows.push({qNum:Number(qNum),qTxt:qTxt,qTyp:qTyp,opts:opts});
   }
 
@@ -355,7 +355,7 @@ function parse(wb) {
     if(qn!==null&&qn!==undefined&&String(qn).trim()!==''){lastQN=Number(qn);if(!scoreMap[lastQN])scoreMap[lastQN]={};}
     var rawCell=String(cv(wsT,tr,2)||'').trim(),cellLines=rawCell.split('\n');
     for(var cl=0;cl<cellLines.length;cl++){
-      var cm=cellLines[cl].trim().match(/^([A-F])\.\s*.+$/);
+      var cm=cellLines[cl].trim().match(/^([A-H])\.\s*.+$/);
       if(cm&&lastQN!==null){
         var letter=cm[1],scores={};
         for(var dj=0;dj<DIMS.length;dj++){var sv=cv(wsT,tr,3+dj);scores[DIMS[dj]]=(sv===null||sv==='\xB7'||sv===''||sv===undefined)?0:(Number(sv)||0);}
@@ -372,7 +372,7 @@ function parse(wb) {
   function readWeights(rs,re){
     var res={};
     for(var wr=rs;wr<=re;wr++){
-      var wraw=String(cv(wsW,wr,1)||'').trim(),wm=wraw.match(/^([A-F])\.\s*/);
+      var wraw=String(cv(wsW,wr,1)||'').trim(),wm=wraw.match(/^([A-H])\.\s*/);
       if(!wm)continue;
       var weights={};
       for(var wi=0;wi<wArchIds.length;wi++){var wv=cv(wsW,wr,2+wi);if(wv!==null&&wv!==undefined&&wv!=='')weights[wArchIds[wi]]=Number(wv)||0;}
