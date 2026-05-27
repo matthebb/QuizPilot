@@ -169,7 +169,7 @@ var CACHE_VERSION = 'dal_params_version_v16'; // stores version string e.g. "1.4
 
 // ── State ─────────────────────────────────────────────────
 var HTML_VERSION  = '1.8';   // bump this whenever dal_quiz.html is updated
-var HTML_VERSION = '1.9'; // bump when dal_quiz.html is updated
+var HTML_VERSION = '2.0'; // bump when dal_quiz.html is updated
 var P = null, answers = [], cur = 0;
 var DIMS = ['ANL','CON','CRE','SOC','EXP','LED','INV'];
 
@@ -654,8 +654,12 @@ function buildPrompt(archName, answerTexts) {
     }
   }
   return (
-    'You are writing a short personalised observation for someone who has just completed a university ' +
-    'program-matching quiz. They have been matched to the ' + archName + ' archetype.\n\n' +
+    'You are writing a short personalised observation for a high school student who has just completed ' +
+    'a university program-matching quiz. Your goal is to build their confidence and spark genuine ' +
+    'curiosity about exploring the university programs that suit them. ' +
+    'The tone should be warm, affirming, and forward-looking — the kind of thing that makes a ' +
+    'teenager feel seen and a little excited about what university could hold for them.\n\n' +
+    'They have been matched to the ' + archName + ' archetype.\n\n' +
     'Here is what their answers reveal about them as a person:\n' +
     lines.join('\n') + '\n\n' +
     'Write exactly ONE sentence (25-40 words) that begins with ' +
@@ -665,8 +669,7 @@ function buildPrompt(archName, answerTexts) {
     '- Do NOT name or describe the archetype\n' +
     '- Do NOT use generic filler phrases: "you thrive", "you are passionate", "you have a gift", ' +
     '"you are drawn to", "you excel"\n' +
-    '- The sentence should feel like something a perceptive person noticed about them, not a compliment\n' +
-    '- Focus on HOW they think and work, not WHAT they want to do\n' +
+    '- The sentence should feel like something a perceptive person noticed about them — affirming but not sycophantic\\n' +\n    '- End on a note that feels open and forward-looking\\n' +    '- Focus on HOW they think and work, not WHAT they want to do\n' +
     '- Be specific to their actual answers, not generic to the archetype\n\n' +
     'Return only the sentence, nothing else.'
   );
