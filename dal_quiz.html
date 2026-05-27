@@ -17,30 +17,22 @@
   .hsub{font-size:0.78rem;color:var(--mid);letter-spacing:0.08em;text-transform:uppercase;}
   .screen{display:none;} .screen.active{display:block;animation:fadeUp 0.4s ease both;}
   @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
-
-  /* startup screen */
   #startup{text-align:center;padding:4rem 0;}
-  .startup-logo{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--gold-dk);margin-bottom:0.5rem;}
-  .startup-sub{font-size:0.85rem;color:var(--mid);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2.5rem;}
+  .startup-logo{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--gold-dk);margin-bottom:0.25rem;}
+  .startup-ver{font-size:0.7rem;color:var(--mid);letter-spacing:0.08em;margin-bottom:2.5rem;}
   .spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  .startup-msg{font-size:0.9rem;color:var(--mid);}
-  .startup-msg.err{color:#900;background:#FEE;border:1px solid #F88;border-radius:8px;padding:0.75rem 1.25rem;font-size:0.86rem;white-space:pre-wrap;text-align:left;margin-top:1rem;}
-
-  /* fallback upload */
+  .startup-msg{font-size:0.88rem;color:var(--mid);}
+  .startup-msg.err{color:#900;background:#FEE;border:1px solid #F88;border-radius:8px;padding:0.75rem 1.25rem;font-size:0.86rem;white-space:pre-wrap;text-align:left;display:inline-block;margin-top:1rem;}
   .fallback{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);}
   .fallback p{font-size:0.85rem;color:var(--mid);margin-bottom:0.75rem;}
   .file-label{display:inline-block;padding:0.6rem 1.4rem;background:var(--gold);color:#fff;border-radius:8px;font-size:0.86rem;font-weight:600;cursor:pointer;transition:background 0.15s;position:relative;}
   .file-label:hover{background:var(--gold-dk);}
   .file-label input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;font-size:1px;}
-
-  /* progress */
   .prog{margin-bottom:2rem;}
   .prog-meta{display:flex;justify-content:space-between;font-size:0.77rem;color:var(--mid);margin-bottom:0.45rem;letter-spacing:0.04em;text-transform:uppercase;}
   .prog-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
   .prog-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.4s cubic-bezier(0.4,0,0.2,1);}
-
-  /* question */
   .q-type{font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:0.55rem;}
   .q-type.pref{color:var(--mid);}
   .q-text{font-family:'Playfair Display',serif;font-size:clamp(1.25rem,3vw,1.6rem);font-weight:600;line-height:1.3;margin-bottom:1.75rem;}
@@ -56,8 +48,6 @@
   .btn:hover:not(:disabled){border-color:var(--black);background:var(--black);color:var(--white);}
   .btn:disabled{opacity:0.3;cursor:not-allowed;} .btn.pri{background:var(--gold);border-color:var(--gold);color:#fff;}
   .btn.pri:hover:not(:disabled){background:var(--gold-dk);border-color:var(--gold-dk);}
-
-  /* result */
   .res-eye{font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:0.5rem;}
   .res-name{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,2.8rem);font-weight:700;line-height:1.1;margin-bottom:0.7rem;}
   .res-tag{font-size:1rem;color:var(--mid);line-height:1.6;max-width:500px;margin-bottom:1.5rem;}
@@ -89,20 +79,17 @@
     <span class="hsub">Find Your Path</span>
   </header>
 
-  <!-- STARTUP: auto-loads everything, shows fallback only if fetch fails -->
   <div id="startup" class="screen active">
     <div class="startup-logo">Find Your Path</div>
-    <div style="font-size:0.7rem;color:var(--mid);letter-spacing:0.08em;margin-bottom:0.25rem;">v1.3 &nbsp;&middot;&nbsp; Dalhousie University</div>
-    <div class="startup-sub">Dalhousie University</div>
+    <div class="startup-ver" id="ver-display">Loading&hellip;</div>
     <div class="spin" id="spin"></div>
-    <div class="startup-msg" id="startup-msg">Loading&#8230;</div>
+    <div class="startup-msg" id="startup-msg">Checking for updates&hellip;</div>
     <div class="fallback" id="fallback" style="display:none">
-      <p>Could not load automatically. Upload <code>dal_quiz_logic.xlsx</code> to continue:</p>
+      <p>Auto-load failed. Upload <code>dal_quiz_logic.xlsx</code> manually to continue:</p>
       <label class="file-label">Choose file<input type="file" id="fi" accept=".xlsx,.xls,.xlsm"></label>
     </div>
   </div>
 
-  <!-- QUIZ -->
   <div id="qs" class="screen">
     <div class="prog">
       <div class="prog-meta"><span id="qc">Question 1 of 12</span><span id="qp">8%</span></div>
@@ -117,7 +104,6 @@
     </div>
   </div>
 
-  <!-- RESULT -->
   <div id="rs" class="screen">
     <p class="res-eye">Your archetype</p>
     <h2 class="res-name" id="rn"></h2>
@@ -135,114 +121,193 @@
   </div>
 </div>
 
-<!-- XLSX library — loaded locally from repo, no CDN dependency -->
+<!-- XLSX loaded locally — no CDN dependency -->
 <script src="xlsx.full.min.js"></script>
-<script>
-var XLSX_LOADED = false;
-// Local script loads synchronously — check immediately and after a tick
-(function() {
-  if (typeof XLSX !== 'undefined') {
-    XLSX_LOADED = true;
-    // fetchParams called after DOM ready
-  }
-})();
-</script>
 
 <script>
+// ── Cache keys ────────────────────────────────────────────
+var CACHE_PARAMS  = 'dal_params_data';    // stores serialised P object
+var CACHE_VERSION = 'dal_params_version'; // stores version string e.g. "1.4"
+
+// ── State ─────────────────────────────────────────────────
 var P = null, answers = [], cur = 0;
 var DIMS = ['ANL','CON','CRE','SOC','EXP','LED','INV'];
 
-// Trigger auto-fetch once DOM is ready (library loaded synchronously above)
-document.addEventListener('DOMContentLoaded', function() {
-  if (typeof XLSX !== 'undefined') {
-    XLSX_LOADED = true;
-    fetchParams();
-  } else {
-    setMsg('Excel library failed to load. Make sure xlsx.full.min.js is in the same folder as this page.', true);
-    showFallback();
-  }
-});
-
-// ── Startup helpers ───────────────────────────────────────
+// ── UI helpers ────────────────────────────────────────────
+function show(id) {
+  var ss = document.querySelectorAll('.screen');
+  for (var i=0;i<ss.length;i++) ss[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+}
 function setMsg(txt, isErr) {
   var el = document.getElementById('startup-msg');
   el.textContent = txt;
   el.className = 'startup-msg' + (isErr ? ' err' : '');
   document.getElementById('spin').style.display = isErr ? 'none' : 'block';
 }
-
+function setVer(txt) {
+  document.getElementById('ver-display').textContent = txt;
+}
 function showFallback() {
   document.getElementById('fallback').style.display = 'block';
   var fi = document.getElementById('fi');
   if (fi) fi.addEventListener('change', function() {
     var f = this.files && this.files[0];
-    if (f) loadFromBinary(f);
-    this.value = '';
+    if (f) { this.value=''; readAndParse(f); }
   });
 }
 
-function show(id) {
-  var ss = document.querySelectorAll('.screen');
-  for (var i=0;i<ss.length;i++) ss[i].classList.remove('active');
-  document.getElementById(id).classList.add('active');
-}
+// ── Boot sequence ─────────────────────────────────────────
+// 1. Fetch the Excel from the repo
+// 2. Read version from "Version" sheet cell B3
+// 3. Compare to cached version in localStorage
+// 4. If same: load P from localStorage cache (fast, no re-parse)
+// 5. If different: parse fresh, update cache, update version
+// 6. Start quiz
 
-// ── Auto-fetch the Excel file from same directory ─────────
-function fetchParams() {
-  setMsg('Loading quiz parameters\u2026');
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof XLSX === 'undefined') {
+    setMsg('Excel library (xlsx.full.min.js) not found.\nMake sure it is in the same folder as this page.', true);
+    showFallback();
+    return;
+  }
+  fetchAndCheck();
+});
 
-  // Derive the Excel URL from the current page URL
-  // Works for GitHub Pages, Netlify, any static host
-  var base = window.location.href.replace(/\/[^\/]*$/, '/');
+function fetchAndCheck() {
+  setMsg('Checking for updates\u2026');
+
+  // Derive Excel URL from current page URL
+  var base = window.location.href.replace(/[?#].*$/, '').replace(/\/[^\/]*$/, '/');
   var xlsxUrl = base + 'dal_quiz_logic.xlsx';
 
   var xhr = new XMLHttpRequest();
   xhr.open('GET', xlsxUrl, true);
   xhr.responseType = 'arraybuffer';
 
+  // Add cache-busting timestamp so browser always checks server for latest
+  xhr.open('GET', xlsxUrl + '?t=' + Date.now(), true);
+  xhr.responseType = 'arraybuffer';
+
   xhr.onload = function() {
     if (xhr.status === 200) {
       try {
         var data = new Uint8Array(xhr.response);
-        var wb = XLSX.read(data, { type: 'array', cellFormula: false });
+        var wb = XLSX.read(data, { type:'array', cellFormula:false });
+
+        // Read version from Version sheet B3
+        var liveVersion = readVersion(wb);
+        var cachedVersion = null;
+        try { cachedVersion = localStorage.getItem(CACHE_VERSION); } catch(e){}
+
+        setVer('Parameters v' + (liveVersion || '?'));
+
+        if (liveVersion && cachedVersion === liveVersion) {
+          // Same version — try to load P from cache
+          setMsg('Loading from cache (v' + liveVersion + ')\u2026');
+          var cached = loadFromCache();
+          if (cached) {
+            P = cached;
+            startQuiz();
+            return;
+          }
+        }
+
+        // Version changed or no cache — parse fresh
+        if (liveVersion && cachedVersion && cachedVersion !== liveVersion) {
+          setMsg('New version detected (v' + liveVersion + ') \u2014 updating\u2026');
+        } else {
+          setMsg('Loading parameters\u2026');
+        }
+
         P = parse(wb);
+        saveToCache(P, liveVersion);
         startQuiz();
+
       } catch(ex) {
-        setMsg('Could not read the parameter file.\n\nError: ' + ex.message, true);
+        setMsg('Could not read parameter file.\n\nError: ' + ex.message, true);
         showFallback();
         console.error(ex);
       }
     } else {
-      setMsg('Parameter file not found at: ' + xlsxUrl + '\n\nMake sure dal_quiz_logic.xlsx is in the same folder as this page.', true);
+      setMsg('Parameter file not found.\nMake sure dal_quiz_logic.xlsx is in the same folder as this page.', true);
       showFallback();
     }
   };
 
   xhr.onerror = function() {
-    // CORS or network error — show fallback upload
-    setMsg('Could not auto-load the parameter file (network error).\nUpload it manually below to continue.', true);
-    showFallback();
+    // Network error — try cache
+    setMsg('Network error. Trying cached version\u2026');
+    var cached = loadFromCache();
+    if (cached) {
+      P = cached;
+      var v = '';
+      try { v = localStorage.getItem(CACHE_VERSION) || ''; } catch(e){}
+      setVer('Parameters v' + v + ' (cached)');
+      startQuiz();
+    } else {
+      setMsg('Could not load parameters and no cached version found.\nUpload the file manually below.', true);
+      showFallback();
+    }
   };
 
   xhr.send();
 }
 
-function loadFromBinary(file) {
+// ── Version reader ────────────────────────────────────────
+// Reads cell B3 of the "Version" sheet
+function readVersion(wb) {
+  var wsV = wb.Sheets['Version'];
+  if (!wsV) return null;
+  var cell = wsV[XLSX.utils.encode_cell({r:2, c:1})]; // B3 = row 2, col 1 (0-indexed)
+  return cell && cell.v !== undefined ? String(cell.v).trim() : null;
+}
+
+// ── localStorage cache helpers ────────────────────────────
+function saveToCache(params, version) {
+  try {
+    var serialised = JSON.stringify(params);
+    localStorage.setItem(CACHE_PARAMS, serialised);
+    if (version) localStorage.setItem(CACHE_VERSION, version);
+  } catch(e) {
+    // Storage full or blocked — silently skip caching
+    console.warn('Could not cache params:', e);
+  }
+}
+
+function loadFromCache() {
+  try {
+    var raw = localStorage.getItem(CACHE_PARAMS);
+    if (!raw) return null;
+    var parsed = JSON.parse(raw);
+    // Basic sanity check
+    if (parsed && parsed.archetypes && parsed.archetypes.length > 0 && parsed.questions && parsed.questions.length > 0) {
+      return parsed;
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ── Manual file upload fallback ───────────────────────────
+function readAndParse(file) {
   setMsg('Reading file\u2026');
   document.getElementById('fallback').style.display = 'none';
   document.getElementById('spin').style.display = 'block';
   var reader = new FileReader();
   reader.onload = function(e) {
     try {
-      var wb = XLSX.read(e.target.result, { type: 'binary', cellFormula: false });
+      var wb = XLSX.read(e.target.result, { type:'binary', cellFormula:false });
+      var v = readVersion(wb);
+      setVer('Parameters v' + (v || '?'));
       P = parse(wb);
+      saveToCache(P, v);
       startQuiz();
     } catch(ex) {
-      setMsg('Could not read the file.\n\nError: ' + ex.message, true);
+      setMsg('Could not read file.\n\nError: ' + ex.message, true);
       showFallback();
     }
   };
-  reader.onerror = function() { setMsg('Could not read the file. Please try again.', true); showFallback(); };
+  reader.onerror = function() { setMsg('Could not read file. Please try again.', true); showFallback(); };
   reader.readAsBinaryString(file);
 }
 
@@ -256,6 +321,8 @@ function cv(ws, r, c) {
 function parse(wb) {
   var out = {archetypes:[],profiles:{},questions:[],programs:{}};
 
+  // Archetype Profiles: names row 14 cols 5-14, taglines row 15,
+  // dim scores rows 16-22 (accumulated-total scale)
   var wsP = wb.Sheets['Archetype Profiles'];
   if (!wsP) throw new Error('"Archetype Profiles" sheet not found.');
   for (var c=5;c<=14;c++) {
@@ -265,8 +332,9 @@ function parse(wb) {
     out.profiles[id]={};
     for (var di=0;di<DIMS.length;di++) out.profiles[id][DIMS[di]]=Number(cv(wsP,16+di,c))||0;
   }
-  if (!out.archetypes.length) throw new Error('No archetypes found in row 14 cols 5-14.');
+  if (!out.archetypes.length) throw new Error('No archetypes found in Archetype Profiles row 14.');
 
+  // Score Simulator: rows 4-15
   var wsS = wb.Sheets['Score Simulator'];
   if (!wsS) throw new Error('"Score Simulator" sheet not found.');
   var simRows=[];
@@ -278,7 +346,8 @@ function parse(wb) {
     simRows.push({qNum:Number(qNum),qTxt:qTxt,qTyp:qTyp,opts:opts});
   }
 
-  var wsT=wb.Sheets['Trait Dimension Theory'];
+  // Trait Dimension Theory: scores per option
+  var wsT = wb.Sheets['Trait Dimension Theory'];
   if (!wsT) throw new Error('"Trait Dimension Theory" sheet not found.');
   var tRange=XLSX.utils.decode_range(wsT['!ref']),scoreMap={},lastQN=null;
   for (var tr=4;tr<=tRange.e.r+1;tr++) {
@@ -295,11 +364,22 @@ function parse(wb) {
     }
   }
 
-  var wsW=wb.Sheets['Q7-Q12 Direct Weights'];
+  // Q7-Q12 Direct Weights: row 5 = arch headers, Q7 rows 6-11, Q12 rows 13-18
+  var wsW = wb.Sheets['Q7-Q12 Direct Weights'];
   if (!wsW) throw new Error('"Q7-Q12 Direct Weights" sheet not found.');
   var wArchIds=[];
   for(var wc=2;wc<=15;wc++){var wn=cv(wsW,5,wc);if(wn&&String(wn).trim())wArchIds.push(slug(String(wn)));}
-  function readWeights(rs,re){var res={};for(var wr=rs;wr<=re;wr++){var wraw=String(cv(wsW,wr,1)||'').trim(),wm=wraw.match(/^([A-F])\.\s*/);if(!wm)continue;var weights={};for(var wi=0;wi<wArchIds.length;wi++){var wv=cv(wsW,wr,2+wi);if(wv!==null&&wv!==undefined&&wv!=='')weights[wArchIds[wi]]=Number(wv)||0;}res[wm[1]]=weights;}return res;}
+  function readWeights(rs,re){
+    var res={};
+    for(var wr=rs;wr<=re;wr++){
+      var wraw=String(cv(wsW,wr,1)||'').trim(),wm=wraw.match(/^([A-F])\.\s*/);
+      if(!wm)continue;
+      var weights={};
+      for(var wi=0;wi<wArchIds.length;wi++){var wv=cv(wsW,wr,2+wi);if(wv!==null&&wv!==undefined&&wv!=='')weights[wArchIds[wi]]=Number(wv)||0;}
+      res[wm[1]]=weights;
+    }
+    return res;
+  }
   var q7map=readWeights(6,11),q12map=readWeights(13,18);
 
   for(var si=0;si<simRows.length;si++){
@@ -313,19 +393,27 @@ function parse(wb) {
   }
   out.questions.sort(function(a,b){return a.qNum-b.qNum;});
 
+  // Programs
   var wsG=wb.Sheets['Dal Programs by Archetype'];
-  if(wsG){var gRange=XLSX.utils.decode_range(wsG['!ref']),lastId=null;
-    for(var gr=4;gr<=gRange.e.r+1;gr++){var an=cv(wsG,gr,2),pn=cv(wsG,gr,4);if(an)lastId=slug(String(an));if(pn&&lastId){if(!out.programs[lastId])out.programs[lastId]=[];out.programs[lastId].push(String(pn).trim());}}}
+  if(wsG){
+    var gRange=XLSX.utils.decode_range(wsG['!ref']),lastId=null;
+    for(var gr=4;gr<=gRange.e.r+1;gr++){
+      var an=cv(wsG,gr,2),pn=cv(wsG,gr,4);
+      if(an)lastId=slug(String(an));
+      if(pn&&lastId){if(!out.programs[lastId])out.programs[lastId]=[];out.programs[lastId].push(String(pn).trim());}
+    }
+  }
   return out;
 }
 
 // ── Quiz ──────────────────────────────────────────────────
-function startQuiz(){
-  answers=[];for(var i=0;i<P.questions.length;i++)answers.push(null);
-  cur=0;show('qs');render();
+function startQuiz() {
+  answers=[];
+  for(var i=0;i<P.questions.length;i++) answers.push(null);
+  cur=0; show('qs'); render();
 }
 
-function render(){
+function render() {
   var q=P.questions[cur],tot=P.questions.length,pct=Math.round(((cur+1)/tot)*100);
   document.getElementById('qc').textContent='Question '+(cur+1)+' of '+tot;
   document.getElementById('qp').textContent=pct+'%';
@@ -334,34 +422,49 @@ function render(){
   var lbl=document.getElementById('ql');
   if(q.type==='direct'){lbl.textContent='Your preference';lbl.className='q-type pref';}
   else{lbl.textContent='About you';lbl.className='q-type';}
-  var list=document.getElementById('ol');list.innerHTML='';
-  for(var i=0;i<q.options.length;i++){(function(idx){var opt=q.options[idx],li=document.createElement('li');li.className='opt'+(answers[cur]===idx?' sel':'');li.innerHTML='<span class="opt-l">'+esc(opt.letter)+'</span><span class="opt-t">'+esc(opt.text)+'</span>';li.addEventListener('click',function(){pick(idx);});list.appendChild(li);})(i);}
+  var list=document.getElementById('ol'); list.innerHTML='';
+  for(var i=0;i<q.options.length;i++){
+    (function(idx){
+      var opt=q.options[idx],li=document.createElement('li');
+      li.className='opt'+(answers[cur]===idx?' sel':'');
+      li.innerHTML='<span class="opt-l">'+esc(opt.letter)+'</span><span class="opt-t">'+esc(opt.text)+'</span>';
+      li.addEventListener('click',function(){pick(idx);});
+      list.appendChild(li);
+    })(i);
+  }
   document.getElementById('bb').disabled=(cur===0);
-  var nb=document.getElementById('bn');nb.disabled=(answers[cur]===null);nb.textContent=(cur===tot-1)?'See my results \u2192':'Next \u2192';
+  var nb=document.getElementById('bn');
+  nb.disabled=(answers[cur]===null);
+  nb.textContent=(cur===tot-1)?'See my results \u2192':'Next \u2192';
 }
 
-function pick(idx){
+function pick(idx) {
   answers[cur]=idx;
   var items=document.querySelectorAll('.opt');
   for(var i=0;i<items.length;i++){if(i===idx)items[i].classList.add('sel');else items[i].classList.remove('sel');}
   document.getElementById('bn').disabled=false;
 }
 
-function nav(dir){
+function nav(dir) {
   if(dir===1&&cur===P.questions.length-1){showResult();return;}
-  cur=Math.max(0,Math.min(P.questions.length-1,cur+dir));render();
+  cur=Math.max(0,Math.min(P.questions.length-1,cur+dir)); render();
 }
 
 // ── Scoring ───────────────────────────────────────────────
-function calcScore(){
+function calcScore() {
   var dimT={},dirT={};
-  for(var i=0;i<DIMS.length;i++)dimT[DIMS[i]]=0;
-  for(var j=0;j<P.archetypes.length;j++)dirT[P.archetypes[j].id]=0;
+  for(var i=0;i<DIMS.length;i++) dimT[DIMS[i]]=0;
+  for(var j=0;j<P.archetypes.length;j++) dirT[P.archetypes[j].id]=0;
   for(var qi=0;qi<P.questions.length;qi++){
-    var ai=answers[qi];if(ai===null||ai===undefined)continue;
-    var opt=P.questions[qi].options[ai];if(!opt)continue;
-    if(opt.isDirect){var wts=opt.weights||{};for(var k in wts)if(Object.prototype.hasOwnProperty.call(wts,k)&&Object.prototype.hasOwnProperty.call(dirT,k))dirT[k]+=wts[k];}
-    else{var sc=opt.scores||{};for(var di=0;di<DIMS.length;di++)dimT[DIMS[di]]+=sc[DIMS[di]]||0;}
+    var ai=answers[qi]; if(ai===null||ai===undefined) continue;
+    var opt=P.questions[qi].options[ai]; if(!opt) continue;
+    if(opt.isDirect){
+      var wts=opt.weights||{};
+      for(var k in wts) if(Object.prototype.hasOwnProperty.call(wts,k)&&Object.prototype.hasOwnProperty.call(dirT,k)) dirT[k]+=wts[k];
+    } else {
+      var sc=opt.scores||{};
+      for(var di=0;di<DIMS.length;di++) dimT[DIMS[di]]+=sc[DIMS[di]]||0;
+    }
   }
   var results=[];
   for(var ai2=0;ai2<P.archetypes.length;ai2++){
@@ -372,28 +475,35 @@ function calcScore(){
   }
   results.sort(function(a,b){return a.adj-b.adj;});
   var gap=results.length>1?results[1].adj-results[0].adj:99;
-  return{results:results,conf:gap>=3?'Strong':(gap>=1.5?'Moderate':'Narrow'),gap:gap};
+  var conf=gap>=3?'Strong':(gap>=1.5?'Moderate':'Narrow');
+  return{results:results,conf:conf,gap:gap};
 }
 
 // ── Result ────────────────────────────────────────────────
-function showResult(){
+function showResult() {
   var s=calcScore(),win=s.results[0];
   document.getElementById('rn').textContent=win.name;
   document.getElementById('rt').textContent=win.tagline||'';
   var cls=s.conf.toLowerCase();
   document.getElementById('rc').innerHTML='<div class="conf '+cls+'">'+(cls==='strong'?'\u2726':(cls==='moderate'?'\u25C8':'\u25C7'))+' '+s.conf+' match &nbsp;&middot;&nbsp; gap to 2nd: '+s.gap.toFixed(1)+'</div>';
   var progs=P.programs[win.id]||[],ph='';
-  if(progs.length){for(var pi=0;pi<progs.length;pi++)ph+='<span class="chip">'+esc(progs[pi])+'</span>';}
+  if(progs.length){for(var pi=0;pi<progs.length;pi++) ph+='<span class="chip">'+esc(progs[pi])+'</span>';}
   else ph='<span style="color:var(--mid);font-size:0.85rem">No programs listed.</span>';
   document.getElementById('rp').innerHTML=ph;
   var maxA=s.results[0].adj,minA=s.results[0].adj;
   for(var i=0;i<s.results.length;i++){if(s.results[i].adj>maxA)maxA=s.results[i].adj;if(s.results[i].adj<minA)minA=s.results[i].adj;}
   var rng=maxA-minA||1,bh='';
-  for(var j=0;j<s.results.length;j++){var r2=s.results[j],pct=Math.round(((maxA-r2.adj)/rng)*100),w=(j===0);bh+='<div class="brow"><span class="bname '+(w?'w':'')+'">' +esc(r2.name)+'</span><div class="btrack"><div class="bfill '+(w?'w':'')+'" style="width:'+pct+'%"></div></div><span class="bval '+(w?'w':'')+'">'+r2.adj.toFixed(1)+'</span></div>';}
+  for(var j=0;j<s.results.length;j++){
+    var r2=s.results[j],pct=Math.round(((maxA-r2.adj)/rng)*100),w=(j===0);
+    bh+='<div class="brow"><span class="bname '+(w?'w':'')+'">' +esc(r2.name)+'</span>'+
+        '<div class="btrack"><div class="bfill '+(w?'w':'')+'" style="width:'+pct+'%"></div></div>'+
+        '<span class="bval '+(w?'w':'')+'">'+r2.adj.toFixed(1)+'</span></div>';
+  }
   document.getElementById('rb').innerHTML=bh;
   show('rs');
 }
 
+// ── Utils ─────────────────────────────────────────────────
 function slug(s){return String(s).toLowerCase().replace(/[^a-z0-9\s]/g,'').trim().replace(/\s+/g,'_');}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 </script>
