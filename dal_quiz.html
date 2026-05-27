@@ -549,24 +549,43 @@ function showResult() {
 // API key handled server-side by Netlify function — no key in client code
 
 var Q_LABELS = {
-  1:'school subjects',2:'group behaviour',3:'proudest project',
-  4:'feelings about presenting',5:'core motivation',6:'problem-solving style',
-  8:'feedback preference',9:'Saturday activity',10:'ideal working context'
+  2:'how they behave in a group',
+  4:'how they feel about performing or presenting',
+  5:'what motivates them most',
+  6:'how they approach problems',
+  8:'the kind of feedback that works best for them',
+  9:'what they enjoy doing on a Saturday',
+  10:'the kind of people they want around them at work'
 };
+// Q1 (subjects), Q3 (project), deliberately excluded — too domain-specific, pull toward program names
+// Q7 and Q11 excluded — direct career/setting signals, too explicit
 
 function buildPrompt(archName, answerTexts) {
   var lines = [];
-  for (var qn in answerTexts) {
-    if (Q_LABELS[qn]) lines.push('- Their ' + Q_LABELS[qn] + ': ' + answerTexts[qn]);
+  // Only include the behavioural/personality questions — not subject or career choices
+  var order = [2, 4, 5, 6, 8, 9, 10];
+  for (var i = 0; i < order.length; i++) {
+    var qn = order[i];
+    if (answerTexts[qn] && Q_LABELS[qn]) {
+      lines.push('- ' + Q_LABELS[qn] + ': "' + answerTexts[qn] + '"');
+    }
   }
   return (
-    'You are writing a single personalised sentence for a university program-matching quiz. ' +
-    'The respondent matched the ' + archName + ' archetype.\n\n' +
-    'Their answers:\n' + lines.join('\n') + '\n\n' +
-    'Write ONE sentence (20-35 words) in second person starting with "You" that synthesises 2-3 of their ' +
-    'specific answers into a precise observation about this particular person. ' +
-    'Do not name the archetype. Avoid generic phrases like "you thrive" or "you are passionate". ' +
-    'Sound like an observation, not a compliment. Return only the sentence.'
+    'You are writing a short personalised observation for someone who has just completed a university ' +
+    'program-matching quiz. They have been matched to the ' + archName + ' archetype.\n\n' +
+    'Here is what their answers reveal about them as a person:\n' +
+    lines.join('\n') + '\n\n' +
+    'Write exactly ONE sentence (25-40 words) in second person (starting with "You") that makes a ' +
+    'specific, concrete observation about this particular person based on 2-3 of the signals above. ' +
+    'Rules:\n' +
+    '- Do NOT mention any career, field of study, or program name\n' +
+    '- Do NOT name or describe the archetype\n' +
+    '- Do NOT use generic filler phrases: "you thrive", "you are passionate", "you have a gift", ' +
+    '"you are drawn to", "you excel"\n' +
+    '- The sentence should feel like something a perceptive person noticed about them, not a compliment\n' +
+    '- Focus on HOW they think and work, not WHAT they want to do\n' +
+    '- Be specific to their actual answers, not generic to the archetype\n\n' +
+    'Return only the sentence, nothing else.'
   );
 }
 
@@ -598,8 +617,8 @@ function generateInsight(archName) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-opus-4-5',
-      max_tokens: 80,
+      model: 'claude-sonnet-4-6',
+      max_tokens: 120,
       messages: [{ role: 'user', content: prompt }]
     })
   })
