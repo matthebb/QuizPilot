@@ -69,6 +69,24 @@
   .bval{font-size:0.76rem;color:var(--mid);text-align:right;font-variant-numeric:tabular-nums;}
   .bval.w{color:var(--gold-dk);font-weight:700;}
   .rrow{display:flex;gap:10px;flex-wrap:wrap;}
+
+  /* AI personalised insight */
+  .ai-insight{
+    font-size:1.05rem;font-style:italic;color:var(--black);
+    line-height:1.65;max-width:520px;margin-bottom:1.5rem;
+    min-height:1.5rem;position:relative;
+  }
+  .ai-insight.streaming::after{
+    content:'';display:inline-block;width:2px;height:1.1em;
+    background:var(--gold);margin-left:2px;vertical-align:text-bottom;
+    animation:blink 0.7s step-end infinite;
+  }
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+  .ai-insight.error{font-style:normal;font-size:0.85rem;color:var(--mid);}
+
+  .ai-insight{font-size:1.05rem;font-style:italic;color:var(--black);line-height:1.65;max-width:520px;margin-bottom:1.5rem;min-height:1.5rem;}
+  .ai-insight.streaming::after{content:'';display:inline-block;width:2px;height:1.1em;background:var(--gold);margin-left:2px;vertical-align:text-bottom;animation:blink 0.7s step-end infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
 </style>
 </head>
 <body>
@@ -108,6 +126,7 @@
     <p class="res-eye">Your archetype</p>
     <h2 class="res-name" id="rn"></h2>
     <p class="res-tag" id="rt"></p>
+    <p class="ai-insight" id="ai-insight"></p>
     <div id="rc"></div>
     <div class="divider"></div>
     <p class="sec-lbl">Dal programs that fit your profile</p>
@@ -493,6 +512,8 @@ function showResult() {
   var s=calcScore(),win=s.results[0];
   document.getElementById('rn').textContent=win.name;
   document.getElementById('rt').textContent=win.tagline||'';
+  generateInsight(win.name);
+  generateInsight(win.name, win.tagline||'');
   var cls=s.conf.toLowerCase();
   document.getElementById('rc').innerHTML='<div class="conf '+cls+'">'+(cls==='strong'?'\u2726':(cls==='moderate'?'\u25C8':'\u25C7'))+' '+s.conf+' match &nbsp;&middot;&nbsp; gap to 2nd: '+s.gap.toFixed(1)+'</div>';
   var progs=P.programs[win.id]||[],ph='';
@@ -513,6 +534,92 @@ function showResult() {
 }
 
 // ── Utils ─────────────────────────────────────────────────
+
+// ── AI personalised insight ───────────────────────────────────────────────────
+var ANTHROPIC_API_KEY = 'YOUR_API_KEY_HERE';
+
+var Q_LABELS = {
+  1:'school subjects',2:'group behaviour',3:'proudest project',
+  4:'feelings about presenting',5:'core motivation',6:'problem-solving style',
+  8:'feedback preference',9:'Saturday activity',10:'ideal working context'
+};
+
+function buildPrompt(archName, answerTexts) {
+  var lines = [];
+  for (var qn in answerTexts) {
+    if (Q_LABELS[qn]) lines.push('- Their ' + Q_LABELS[qn] + ': ' + answerTexts[qn]);
+  }
+  return (
+    'You are writing a single personalised sentence for a university program-matching quiz. ' +
+    'The respondent matched the ' + archName + ' archetype.\n\n' +
+    'Their answers:\n' + lines.join('\n') + '\n\n' +
+    'Write ONE sentence (20-35 words) in second person starting with "You" that synthesises 2-3 of their ' +
+    'specific answers into a precise observation about this particular person. ' +
+    'Do not name the archetype. Avoid generic phrases like "you thrive" or "you are passionate". ' +
+    'Sound like an observation, not a compliment. Return only the sentence.'
+  );
+}
+
+function collectAnswerTexts() {
+  var texts = {};
+  for (var qi=0;qi<P.questions.length;qi++) {
+    var q=P.questions[qi];
+    if (q.type==='direct') continue;
+    var ai=answers[qi];
+    if (ai===null||ai===undefined) continue;
+    var opt=q.options[ai];
+    if (opt) texts[q.qNum]=opt.text;
+  }
+  return texts;
+}
+
+function generateInsight(archName) {
+  var el=document.getElementById('ai-insight');
+  if (!el) return;
+  if (!ANTHROPIC_API_KEY||ANTHROPIC_API_KEY==='YOUR_API_KEY_HERE') { el.style.display='none'; return; }
+  var prompt=buildPrompt(archName, collectAnswerTexts());
+  el.textContent=''; el.className='ai-insight streaming';
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':ANTHROPIC_API_KEY,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-opus-4-5',max_tokens:80,stream:true,
+      messages:[{role:'user',content:prompt}]
+    })
+  }).then(function(r){
+    if(!r.ok) throw new Error('API '+r.status);
+    var reader=r.body.getReader(),decoder=new TextDecoder(),buffer='';
+    function read(){
+      return reader.read().then(function(res){
+        if(res.done){el.className='ai-insight';return;}
+        buffer+=decoder.decode(res.value,{stream:true});
+        var lines=buffer.split('\n'); buffer=lines.pop();
+        for(var i=0;i<lines.length;i++){
+          var line=lines[i].trim();
+          if(!line.startsWith('data: ')) continue;
+          var data=line.slice(6);
+          if(data==='[DONE]'){el.className='ai-insight';return;}
+          try{
+            var p=JSON.parse(data);
+            if(p.type==='content_block_delta'&&p.delta&&p.delta.type==='text_delta')
+              el.textContent+=p.delta.text;
+          }catch(e){}
+        }
+        return read();
+      });
+    }
+    return read();
+  }).catch(function(err){
+    console.warn('AI insight failed:',err);
+    el.className='ai-insight'; el.textContent='';
+  });
+}
+
 function slug(s){return String(s).toLowerCase().replace(/[^a-z0-9\s]/g,'').trim().replace(/\s+/g,'_');}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 </script>
