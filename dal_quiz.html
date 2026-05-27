@@ -48,9 +48,26 @@
   .btn:hover:not(:disabled){border-color:var(--black);background:var(--black);color:var(--white);}
   .btn:disabled{opacity:0.3;cursor:not-allowed;} .btn.pri{background:var(--gold);border-color:var(--gold);color:#fff;}
   .btn.pri:hover:not(:disabled){background:var(--gold-dk);border-color:var(--gold-dk);}
-  .res-eye{font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:0.5rem;}
+  .res-eye{font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:0.4rem;}
+  .res-intro{font-size:0.88rem;color:var(--mid);margin-bottom:0.4rem;}
   .res-name{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,5vw,2.8rem);font-weight:700;line-height:1.1;margin-bottom:0.7rem;}
-  .res-tag{font-size:1rem;color:var(--mid);line-height:1.6;max-width:500px;margin-bottom:1.5rem;}
+  .res-tag{font-size:0.95rem;color:var(--mid);line-height:1.6;max-width:500px;margin-bottom:0.75rem;font-style:italic;}
+  /* ranked results */
+  .ranked-list{display:flex;flex-direction:column;gap:6px;margin-bottom:2rem;}
+  .rank-row{border-radius:10px;overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:border-color 0.15s;}
+  .rank-row:hover{border-color:var(--gold);}
+  .rank-row.active{border-color:var(--gold);}
+  .rank-header{display:grid;grid-template-columns:28px 1fr 60px;align-items:center;gap:8px;padding:10px 14px;}
+  .rank-num{font-size:0.75rem;font-weight:700;color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .rank-name{font-size:0.9rem;font-weight:600;}
+  .rank-bar-wrap{height:6px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden;}
+  .rank-bar{height:100%;border-radius:3px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);}
+  .rank-score{font-size:0.75rem;text-align:right;font-variant-numeric:tabular-nums;opacity:0.7;}
+  .rank-programs{padding:0 14px 12px 14px;display:none;}
+  .rank-row.active .rank-programs{display:block;}
+  .rank-prog-label{font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;opacity:0.6;}
+  .rank-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .rank-chip{padding:3px 10px;border-radius:20px;font-size:0.78rem;border:1px solid rgba(0,0,0,0.12);background:rgba(255,255,255,0.6);}
   .conf{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:0.79rem;font-weight:600;margin-bottom:1.75rem;}
   .conf.strong{background:#EDFAED;color:#1A6B1A;border:1px solid #A8DBA8;}
   .conf.moderate{background:#FFF8E6;color:#7A5515;border:1px solid #F0D89A;}
@@ -126,17 +143,16 @@
   </div>
 
   <div id="rs" class="screen">
-    <p class="res-eye">Your archetype</p>
+    <p class="res-eye">Your closest match</p>
+    <p class="res-intro">The profile that most closely matches your responses is:</p>
     <h2 class="res-name" id="rn"></h2>
     <p class="res-tag" id="rt"></p>
     <p class="ai-insight" id="ai-insight"></p>
     <div id="rc"></div>
     <div class="divider"></div>
-    <p class="sec-lbl">Dal programs that fit your profile</p>
-    <div class="chips" id="rp"></div>
-    <div class="divider"></div>
-    <p class="sec-lbl">Your full archetype profile</p>
-    <div class="bars" id="rb"></div>
+    <p class="sec-lbl">How all archetypes ranked for your responses</p>
+    <p style="font-size:0.8rem;color:var(--mid);margin-bottom:1rem;">Click any archetype to see its Dal programs.</p>
+    <div class="ranked-list" id="ranked-list"></div>
     <div class="rrow">
       <button class="btn pri" onclick="startQuiz()">Take it again</button>
     </div>
@@ -153,7 +169,7 @@ var CACHE_VERSION = 'dal_params_version_v16'; // stores version string e.g. "1.4
 
 // ── State ─────────────────────────────────────────────────
 var HTML_VERSION  = '1.8';   // bump this whenever dal_quiz.html is updated
-var HTML_VERSION = '1.8'; // bump when dal_quiz.html is updated
+var HTML_VERSION = '1.9'; // bump when dal_quiz.html is updated
 var P = null, answers = [], cur = 0;
 var DIMS = ['ANL','CON','CRE','SOC','EXP','LED','INV'];
 
@@ -524,28 +540,89 @@ function calcScore() {
 }
 
 // ── Result ────────────────────────────────────────────────
+
+// Colour palette for ranked rows
+var RANK_COLORS = [
+  {bg:'#C8922A',fg:'#fff',bar:'#C8922A'},
+  {bg:'#5B8A5F',fg:'#fff',bar:'#5B8A5F'},
+  {bg:'#4A7A9B',fg:'#fff',bar:'#4A7A9B'},
+  {bg:'#8A7048',fg:'#fff',bar:'#8A7048'},
+  {bg:'#7A6B8A',fg:'#fff',bar:'#7A6B8A'},
+  {bg:'#9E9E9E',fg:'#fff',bar:'#9E9E9E'},
+  {bg:'#ABABAB',fg:'#fff',bar:'#ABABAB'},
+  {bg:'#B8B8B8',fg:'#fff',bar:'#B8B8B8'},
+  {bg:'#C5C5C5',fg:'#555',bar:'#C5C5C5'},
+  {bg:'#D2D2D2',fg:'#555',bar:'#D2D2D2'}
+];
+
 function showResult() {
-  var s=calcScore(),win=s.results[0];
-  document.getElementById('rn').textContent=win.name;
-  document.getElementById('rt').textContent=win.tagline||'';
+  var s=calcScore(), win=s.results[0];
+  document.getElementById('rn').textContent = win.name;
+  document.getElementById('rt').textContent = win.tagline || '';
   generateInsight(win.name);
-  generateInsight(win.name, win.tagline||'');
-  var cls=s.conf.toLowerCase();
-  document.getElementById('rc').innerHTML='<div class="conf '+cls+'">'+(cls==='strong'?'\u2726':(cls==='moderate'?'\u25C8':'\u25C7'))+' '+s.conf+' match &nbsp;&middot;&nbsp; gap to 2nd: '+s.gap.toFixed(1)+'</div>';
-  var progs=P.programs[win.id]||[],ph='';
-  if(progs.length){for(var pi=0;pi<progs.length;pi++) ph+='<span class="chip">'+esc(progs[pi])+'</span>';}
-  else ph='<span style="color:var(--mid);font-size:0.85rem">No programs listed.</span>';
-  document.getElementById('rp').innerHTML=ph;
-  var maxA=s.results[0].adj,minA=s.results[0].adj;
-  for(var i=0;i<s.results.length;i++){if(s.results[i].adj>maxA)maxA=s.results[i].adj;if(s.results[i].adj<minA)minA=s.results[i].adj;}
-  var rng=maxA-minA||1,bh='';
-  for(var j=0;j<s.results.length;j++){
-    var r2=s.results[j],pct=Math.round(((maxA-r2.adj)/rng)*100),w=(j===0);
-    bh+='<div class="brow"><span class="bname '+(w?'w':'')+'">' +esc(r2.name)+'</span>'+
-        '<div class="btrack"><div class="bfill '+(w?'w':'')+'" style="width:'+pct+'%"></div></div>'+
-        '<span class="bval '+(w?'w':'')+'">'+r2.adj.toFixed(1)+'</span></div>';
+
+  // Confidence badge
+  var cls = s.conf.toLowerCase();
+  document.getElementById('rc').innerHTML =
+    '<div class="conf '+cls+'">' +
+    (cls==='strong' ? '\u2726' : (cls==='moderate' ? '\u25C8' : '\u25C7')) +
+    ' ' + s.conf + ' match &nbsp;&middot;&nbsp; gap to 2nd place: ' + s.gap.toFixed(1) + '</div>';
+
+  // Build interactive ranked list
+  var maxA = s.results[0].adj;
+  var minA = s.results[s.results.length-1].adj;
+  var rng  = maxA - minA || 1;
+  var listEl = document.getElementById('ranked-list');
+  listEl.innerHTML = '';
+
+  for (var j=0; j<s.results.length; j++) {
+    var r2   = s.results[j];
+    var pct  = Math.round(((maxA - r2.adj) / rng) * 100);
+    var col  = RANK_COLORS[j] || RANK_COLORS[RANK_COLORS.length-1];
+    var progs = P.programs[r2.id] || [];
+
+    var progHtml = '';
+    if (progs.length) {
+      for (var pi=0; pi<progs.length; pi++)
+        progHtml += '<span class="rank-chip">'+esc(progs[pi])+'</span>';
+    } else {
+      progHtml = '<span style="opacity:0.6;font-size:0.8rem">No programs listed</span>';
+    }
+
+    var rowDiv = document.createElement('div');
+    rowDiv.className = 'rank-row' + (j===0 ? ' active' : '');
+    rowDiv.style.background = col.bg + '18';
+    rowDiv.setAttribute('data-rank-idx', j);
+    rowDiv.innerHTML =
+      '<div class="rank-header">' +
+        '<span class="rank-num" style="background:'+col.bg+';color:'+col.fg+'">'+(j+1)+'</span>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div class="rank-name" style="color:'+col.bg+'">'+esc(r2.name)+'</div>' +
+          '<div class="rank-bar-wrap" style="margin-top:4px">' +
+            '<div class="rank-bar" style="width:'+pct+'%;background:'+col.bar+'"></div>' +
+          '</div>' +
+        '</div>' +
+        '<span class="rank-score" style="color:'+col.bg+'">'+r2.adj.toFixed(1)+'</span>' +
+      '</div>' +
+      '<div class="rank-programs">' +
+        '<div class="rank-prog-label">Dal programs</div>' +
+        '<div class="rank-chips">'+progHtml+'</div>' +
+      '</div>';
+
+    // Click to expand/collapse
+    (function(idx){ 
+      rowDiv.querySelector('.rank-header').addEventListener('click', function() {
+        var rows = document.querySelectorAll('.rank-row');
+        for (var k=0; k<rows.length; k++) {
+          if (k===idx) rows[k].classList.toggle('active');
+          else rows[k].classList.remove('active');
+        }
+      });
+    })(j);
+
+    listEl.appendChild(rowDiv);
   }
-  document.getElementById('rb').innerHTML=bh;
+
   show('rs');
 }
 
@@ -581,8 +658,8 @@ function buildPrompt(archName, answerTexts) {
     'program-matching quiz. They have been matched to the ' + archName + ' archetype.\n\n' +
     'Here is what their answers reveal about them as a person:\n' +
     lines.join('\n') + '\n\n' +
-    'Write exactly ONE sentence (25-40 words) in second person (starting with "You") that makes a ' +
-    'specific, concrete observation about this particular person based on 2-3 of the signals above. ' +
+    'Write exactly ONE sentence (25-40 words) that begins with ' +
+    '"Based on how you answered, you seem to be someone who" and then completes the observation. ' +
     'Rules:\n' +
     '- Do NOT mention any career, field of study, or program name\n' +
     '- Do NOT name or describe the archetype\n' +
