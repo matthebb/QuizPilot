@@ -645,7 +645,6 @@ var Q_LABELS = {
 
 function buildPrompt(archName, answerTexts) {
   var lines = [];
-  // Only include the behavioural/personality questions — not subject or career choices
   var order = [2, 4, 5, 6, 8, 9, 10];
   for (var i = 0; i < order.length; i++) {
     var qn = order[i];
@@ -654,9 +653,9 @@ function buildPrompt(archName, answerTexts) {
     }
   }
   return (
-    'You are writing a short personalised observation for a high school student who has just completed ' +
-    'a university program-matching quiz. Your goal is to build their confidence and spark genuine ' +
-    'curiosity about exploring the university programs that suit them. ' +
+    'You are writing a short personalised observation for a high school student who has just ' +
+    'completed a university program-matching quiz. Your goal is to build their confidence and ' +
+    'spark genuine curiosity about exploring the university programs that suit them. ' +
     'The tone should be warm, affirming, and forward-looking — the kind of thing that makes a ' +
     'teenager feel seen and a little excited about what university could hold for them.\n\n' +
     'They have been matched to the ' + archName + ' archetype.\n\n' +
@@ -665,11 +664,12 @@ function buildPrompt(archName, answerTexts) {
     'Write exactly ONE sentence (25-40 words) that begins with ' +
     '"Based on how you answered, you seem to be someone who" and then completes the observation. ' +
     'Rules:\n' +
-    '- Do NOT mention any career, field of study, or program name\n' +
+    '- Do NOT mention any career, field of study, program name, or university\n' +
     '- Do NOT name or describe the archetype\n' +
-    '- Do NOT use generic filler phrases: "you thrive", "you are passionate", "you have a gift", ' +
-    '"you are drawn to", "you excel"\n' +
-    '- The sentence should feel like something a perceptive person noticed about them — affirming but not sycophantic\\n' +\n    '- End on a note that feels open and forward-looking\\n' +    '- Focus on HOW they think and work, not WHAT they want to do\n' +
+    '- Do NOT use generic filler phrases: "you thrive", "you are passionate", "you have a gift", "you are drawn to", "you excel"\n' +
+    '- The sentence should feel like something a perceptive person noticed about them — affirming but not sycophantic\n' +
+    '- End on a note that feels open and forward-looking, not like a closed verdict\n' +
+    '- Focus on HOW they think and work, not WHAT they want to do\n' +
     '- Be specific to their actual answers, not generic to the archetype\n\n' +
     'Return only the sentence, nothing else.'
   );
